@@ -8,9 +8,18 @@
             qrcode.make(uri).save(f"{username}_qr.png")
             shutil.move(f"{username}_qr.png", qr+f'\\{username}_qr.png')
 
-            with open(f"{username}_qr.png", 'rb') as qr_file:
-                qr_image = MIMEImage(qr_file.read())
-                msg.attach(qr_image)
+            # create an email message object
+            message = EmailMessage()
+  
+# open image as a binary file and read the contents
+            with open('image.jpg', 'rb') as file:
+                image_data = file.read()
+  
+            message.set_content("Email from Python with image attachment")
+# attach image to email
+            message.add_attachment(image_data, maintype='image', subtype=imghdr.what(None, image_data))
+  
+
             
             totp = pyotp.TOTP(contents)
             verification = totp.verify(input(("Enter the Code : ")))

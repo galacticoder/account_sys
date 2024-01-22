@@ -9,6 +9,7 @@ tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\keys"
 sender_email="galacticcoder@gmail.com"
 sender_pass="jlnw esrt tjlu bnfp"
 sub="Your verification qr code"
+a="f'{qr}+\\{username}_qr.png'"
 
 
 1st line is the key path

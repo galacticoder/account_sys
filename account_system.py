@@ -2,17 +2,11 @@ import re #make it so the username is saved as key and qr code dedicated to that
 import bcrypt
 import msvcrt
 from compress import encry_compr, decry_decom
-import time 
 import pyotp 
 import qrcode
 import os
-import secrets
 import shutil
-from email_sender import send_email
-from email.mime.image import MIMEImage
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from email_sender import *
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -63,19 +57,22 @@ def account():
             ver = lines[5].strip().replace('ver=', '').replace('"', '')
             qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
             user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
-            sender_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
-            sender_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
+            sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
+            sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
             sub = lines[10].strip().replace('sub=', '').replace('"', '')
             msg = lines[11].strip().replace('msg=', '').replace('"', '')
+            att = lines[12].strip().replace('a=', '').replace('"', '')
 
         decry_decom(key, data_to_process)
         print("|------*Login*------|")
         username = input("Username: ")
         password = masked_input()
-        # email = input("Email(for extra security): ")
+        email = input("Email(for extra security): ")
 
         with open(f"{username}_key.key",'w') as user_key:
-            user_key.write(pyotp.random_base32())
+            main = user_key.write(pyotp.random_base32())
+        
+        shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
 
         bytes_password = password.encode('utf-8')
         salt = bcrypt.gensalt()
@@ -84,6 +81,17 @@ def account():
         lines = extract_lines(username, file_path)
 
         if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')):
+            with open(f"{user_key_path}\\{username}_key.key",'r') as f:
+                    contents = f.read()
+            send_email(sender_email=sendr_email, 
+                       sender_password=sendr_pass, 
+                       recipient_email=email, 
+                       subject=sub, 
+                       message=msg, 
+                       attachment_path=att)
+            totp = pyotp.TOTP(contents)
+            verification = totp.verify(input(("Enter the Code : ")))
+
             print("Login sucefful")
             encry_compr(key, data_to_process)
             return
@@ -130,6 +138,14 @@ def account():
                         else:
                             encry_compr(key, data_to_process)
                             return
+                        
+                with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
+                    contents = ver_key.read()
+                uri = pyotp.totp.TOTP(contents).provisioning_uri( 
+                name=username, 
+                issuer_name='GalacticCoder')
+                qrcode.make(uri).save(f"{username}_qr.png")
+                shutil.move(f"{username}_qr.png", qr+f'\\{username}_qr.png')
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
@@ -157,7 +173,7 @@ def account():
                 return
     except KeyboardInterrupt:
         if os.path.getsize(file_path) == 0:
-            print("Operation canceled by user")
+            print("\nOperation canceled by user")
             return
         else:
             print("Operation canceled by user")
