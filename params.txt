@@ -1,0 +1,13 @@
+key="C:\\path\\key.key"
+file="C:\\path\\sign_in.txt"
+unallowed=[",", "}", "{", "\\", "|", ";", ">", "<", "[", "]", "%", ":", "/", "*", "$", "@", "!", "^", "&", ".", "#", "+", "=", "-"," "]
+file_path="C:\\path\\sign_in.txt"
+secret_key="siomeodsiklfjdshjfhjsdil8902893472918"
+ver="C:\path\ver.key"
+qr_code_path=f"C:\\path\qr.png"
+
+first line is the key path
+second line is file path
+third line is unallowed characters in the username
+forth line is for the file path of the file you want to place your clients login details in
+fifth line is the secret_key
