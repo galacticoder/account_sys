@@ -1,20 +1,28 @@
-                with open(f"{username}_key.key",'r') as ver_key:
-                    contents = ver_key.read()
-                uri = pyotp.totp.TOTP(contents).provisioning_uri( 
-                    name=username, 
-                    issuer_name='GalacticCoder')
-                shutil.move(f"{username}_key.key", user_key_path+f'\\{username}_key.key')
-                qrcode.make(uri).save(f"{username}_qr.png")
-                shutil.move(f"{username}_qr.png", qr+f'\\{username}_qr.png')
-                totp = pyotp.TOTP(contents)
-                verification = totp.verify(input(("Enter the Code : ")))
+            # send_email(sender_email=sender_email, sender_password=sender_pass, recipient_email=email, subject=sub, )
+            with open(f"{username}_key.key",'r') as ver_key:
+                contents = ver_key.read()
+            uri = pyotp.totp.TOTP(contents).provisioning_uri( 
+            name=username, 
+            issuer_name='GalacticCoder')
+            shutil.move(f"{username}_key.key", user_key_path+f'\\{username}_key.key')
+            qrcode.make(uri).save(f"{username}_qr.png")
+            shutil.move(f"{username}_qr.png", qr+f'\\{username}_qr.png')
 
-                if verification == True:
-                    print("Verification sucessful")
+            with open(f"{username}_qr.png", 'rb') as qr_file:
+                qr_image = MIMEImage(qr_file.read())
+                msg.attach(qr_image)
+            
+            totp = pyotp.TOTP(contents)
+            verification = totp.verify(input(("Enter the Code : ")))
+
+            if verification:
+                print("Verification successful")
+                encry_compr(key, data_to_process)
+                return
+            else:
+                print("Verification unsuccessful")
+                if os.path.getsize(file_path) == 0:
+                    return
                 else:
-                    print("Verification unsucessful")
-                    if os.path.getsize(file_path) == 0:
-                        return
-                    else:
-                        encry_compr(key, data_to_process)
-                        return
+                    encry_compr(key, data_to_process)
+                    return

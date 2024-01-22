@@ -9,6 +9,10 @@ import os
 import secrets
 import shutil
 from email_sender import send_email
+from email.mime.image import MIMEImage
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -59,13 +63,16 @@ def account():
             ver = lines[5].strip().replace('ver=', '').replace('"', '')
             qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
             user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
-            sender_email = lines[8].strip().replace('tr_key=', '').replace('"', '')
+            sender_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
+            sender_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
+            sub = lines[10].strip().replace('sub=', '').replace('"', '')
+            msg = lines[11].strip().replace('msg=', '').replace('"', '')
 
         decry_decom(key, data_to_process)
         print("|------*Login*------|")
         username = input("Username: ")
         password = masked_input()
-        email = input("Email(for extra security): ")
+        # email = input("Email(for extra security): ")
 
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
@@ -76,13 +83,12 @@ def account():
 
         lines = extract_lines(username, file_path)
 
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and os.path.exists(user_key_path+f"{username}_key.key"):
-            send_email()
-            print("Sign in successful")
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')):
+            print("Login sucefful")
             encry_compr(key, data_to_process)
             return
-
-        sign_up = input('Account not found. Would you like to sign up using these credentials? (y/n): ').lower()
+        else:
+            sign_up = input('Account not found. Would you like to sign up using these credentials? (y/n): ').lower()
 
         if sign_up == 'y':
             with open(file_path, 'a') as sign:
@@ -134,6 +140,8 @@ def account():
             encry_compr(key, data_to_process)
 
         elif sign_up == 'n':
+            os.remove(f"{username}_key.key")
+            os.remove(user_key_path+f"{username}_key.key")
             if os.path.getsize(file_path) == 0:
                 return
             else:

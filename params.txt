@@ -6,12 +6,18 @@ secret_key="siomeodsiklfjdshjfhjsdil8902893472918"
 ver="C:\Users\zombi\OneDrive\Desktop\system_proj\ver.key"
 qr_code_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\qr_codes"
 tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\keys"
-sender_email="
+sender_email="galacticcoder@gmail.com"
+sender_pass="jlnw esrt tjlu bnfp"
+sub="Your verification qr code"
 
-first line is the key path
-second line is file path
-third line is unallowed characters in the username
-forth line is for the file path of the file you want to place your clients login details in
-fifth line is the secret_key
-eighth line is the path to transfer the user key to
-ninth line is sender email
+
+1st line is the key path
+2nd line is file path
+3rd line is unallowed characters in the username
+4th line is for the file path of the file you want to place your clients login details in
+5th line is the secret_key
+8th line is the path to transfer the user key to
+9th line is sender email
+10th line is sender password
+11th line is the email subject
+12th line is the email message
