@@ -1,12 +1,14 @@
 import re #make it so the username is saved as key and qr code dedicated to that user and then save the user key in a different folder and the qr codes maybe
 import bcrypt
 import msvcrt
-from compress import *
+from compress import encry_compr, decry_decom
 import time 
 import pyotp 
 import qrcode
 import os
 import secrets
+import shutil
+from email_sender import send_email
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -55,27 +57,18 @@ def account():
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
             secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
             ver = lines[5].strip().replace('ver=', '').replace('"', '')
-            qr = lines[6].strip().replace('qr_code_path=f', '').replace('"', '')
-
-        # if os.path.exists(ver):
-        #     print("Key file exists")
-        #     with open(ver,'r') as f_verify:
-        #         contents = f_verify.read()
-        # else:
-        #     with open(ver,'w') as k:
-        #         qr_key = k.write(pyotp.random_base32())
-        #         contents = k.read()
+            qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
+            user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
+            sender_email = lines[8].strip().replace('tr_key=', '').replace('"', '')
 
         decry_decom(key, data_to_process)
         print("|------*Login*------|")
         username = input("Username: ")
         password = masked_input()
+        email = input("Email(for extra security): ")
 
-        if os.path.exists(f"{username}_key.key"):
-            print("User key already exists")
-        else:
-            with open(f"{username}_key.key",'w') as user_key:
-                user_key.write(pyotp.random_base32())
+        with open(f"{username}_key.key",'w') as user_key:
+            user_key.write(pyotp.random_base32())
 
         bytes_password = password.encode('utf-8')
         salt = bcrypt.gensalt()
@@ -83,9 +76,9 @@ def account():
 
         lines = extract_lines(username, file_path)
 
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')):
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and os.path.exists(user_key_path+f"{username}_key.key"):
+            send_email()
             print("Sign in successful")
-
             encry_compr(key, data_to_process)
             return
 
@@ -131,25 +124,6 @@ def account():
                         else:
                             encry_compr(key, data_to_process)
                             return
-                        
-                with open(f"{username}_key.key",'r') as ver_key:
-                    contents = ver_key.read()
-                uri = pyotp.totp.TOTP(contents).provisioning_uri( 
-                    name=username, 
-                    issuer_name='GalacticCoder') 
-                qrcode.make(uri).save(qr)
-                totp = pyotp.TOTP(contents)
-                verification = totp.verify(input(("Enter the Code : ")))
-
-                if verification == True:
-                    print("Verification sucessful")
-                    if os.path.exists(qr):
-                        os.remove(qr)
-                else:
-                    print("Verification unsucessful")
-                    if os.path.exists(qr):
-                        os.remove(qr)
-                    return
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
@@ -157,9 +131,8 @@ def account():
                 sign.write(f'---*end of {username}*---\n')
                 print("Sign up successful")
 
-            if os.path.exists(qr):
-                os.remove(qr)
             encry_compr(key, data_to_process)
+
         elif sign_up == 'n':
             if os.path.getsize(file_path) == 0:
                 return
@@ -175,8 +148,6 @@ def account():
                 encry_compr(key, data_to_process)
                 return
     except KeyboardInterrupt:
-        if os.path.exists(qr):
-            os.remove(qr)
         if os.path.getsize(file_path) == 0:
             print("Operation canceled by user")
             return
@@ -185,8 +156,6 @@ def account():
             encry_compr(key, data_to_process)
             return
     except Exception as Error:
-        if os.path.exists(qr):
-            os.remove(qr)
         if os.path.getsize(file_path) == 0:
             print(Error)
             return
