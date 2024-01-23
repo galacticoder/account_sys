@@ -69,12 +69,15 @@ def account():
         shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
 
         bytes_password = password.encode('utf-8')
-        salt = bcrypt.gensalt()
+        bytes_email = email.encode('utf-8')
+        salt = bcrypt.gensalt(12)
+        email_salt = bcrypt.gensalt(12)
         hash_password = bcrypt.hashpw(bytes_password, salt)
+        hash_email = bcrypt.hashpw(bytes_email, salt)
 
         lines = extract_lines(username, file_path)
 
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == lines[2]:
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bcrypt.checkpw(bytes_email, lines[2].encode('utf-8')):
             with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
                 contents = f.read()
 
@@ -183,7 +186,7 @@ def account():
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
                 sign.write(f'{hash_password.decode("utf-8")}\n')
-                sign.write(f'{email}\n')
+                sign.write(f'{hash_email.decode("utf-8")}\n')
                 sign.write(f'---*end of {username}*---\n')
 
                 print("Sign up successful")
