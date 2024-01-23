@@ -1,19 +1,18 @@
 key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\key.key"
-file="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\sign_in.txt"
+
 unallowed=[",", "}", "{", "\\", "|", ";", ">", "<", "[", "]", "%", ":", "/", "*", "$", "@", "!", "^", "&", ".", "#", "+", "=", "-"," "]
 file_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\sign_in.txt"
 secret_key="siomeodsiklfjdshjfhjsdil8902893472918"
 ver="C:\Users\zombi\OneDrive\Desktop\system_proj\ver.key"
 qr_code_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\qr_codes"
 tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\keys"
-sender_email="galacticcoder@gmail.com"
+sender_email="galacticoderr@gmail.com"
 sender_pass="jlnw esrt tjlu bnfp"
 sub="Your verification qr code"
-a="f'{qr}+\\{username}_qr.png'"
 
 
-1st line is the key path
-2nd line is file path
+1st line is the key path for the compression and encryption of the login details file
+2nd line is file path for the login details file
 3rd line is unallowed characters in the username
 4th line is for the file path of the file you want to place your clients login details in
 5th line is the secret_key

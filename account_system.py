@@ -43,14 +43,16 @@ def extract_lines(username, file_path):
             if inside_block:
                 found_lines.append(line.strip())
 
-    return found_lines[1:] if found_lines and username in found_lines[0] else []
+    if found_lines and username in found_lines[0]:
+        return found_lines[1:3] if len(found_lines) >= 3 else []
+    else:
+        return []
 
 def account():
     try:
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
-            data_to_process = lines[1].strip().replace('file=', '').replace('"', '')
             unallowed = lines[2].strip().replace('unallowed=', '')
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
             secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
@@ -61,16 +63,15 @@ def account():
             sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
             sub = lines[10].strip().replace('sub=', '').replace('"', '')
             msg = lines[11].strip().replace('msg=', '').replace('"', '')
-            att = lines[12].strip().replace('a=', '').replace('"', '')
 
-        decry_decom(key, data_to_process)
+        decry_decom(key, file_path)
         print("|------*Login*------|")
         username = input("Username: ")
         password = masked_input()
-        email = input("Email(for extra security): ")
+        email = input("Email(2fa)(only google emails allowed): ")
 
         with open(f"{username}_key.key",'w') as user_key:
-            main = user_key.write(pyotp.random_base32())
+            user_key.write(pyotp.random_base32())
         
         shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
 
@@ -79,24 +80,31 @@ def account():
         hash_password = bcrypt.hashpw(bytes_password, salt)
 
         lines = extract_lines(username, file_path)
+        # print(lines[1]+'\n')
 
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')):
-            with open(f"{user_key_path}\\{username}_key.key",'r') as f:
-                    contents = f.read()
-            send_email(sender_email=sendr_email, 
-                       sender_password=sendr_pass, 
-                       recipient_email=email, 
-                       subject=sub, 
-                       message=msg, 
-                       attachment_path=att)
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == :
+            with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
+                contents = f.read()
+            print("email found")
+            send_email(sender_email=sendr_email,
+                    sender_password=sendr_pass,
+                    recipient_email=email, 
+                    subject=sub,
+                    message=msg,
+                    attachment_path=qr+f'\\{username}_qr.png')
             totp = pyotp.TOTP(contents)
-            verification = totp.verify(input(("Enter the Code : ")))
+            verification = totp.verify(input("Enter the Code : "))
 
-            print("Login sucefful")
-            encry_compr(key, data_to_process)
-            return
-        else:
-            sign_up = input('Account not found. Would you like to sign up using these credentials? (y/n): ').lower()
+            if verification:
+                print("Login verification successful")
+                encry_compr(key, file_path)
+                return
+            else:
+                print("Login verification unsuccessful")
+                encry_compr(key, file_path)
+                return
+
+        sign_up = input('Account not found. Would you like to sign up using these credentials? (y/n): ').lower()
 
         if sign_up == 'y':
             with open(file_path, 'a') as sign:
@@ -104,43 +112,62 @@ def account():
                     for line in file:
                         if re.search(r'---{}---'.format(re.escape(username)), line):
                             print("Username is already in use\n")
+                            os.remove(user_key_path+f"\\{username}_key.key")
                             if os.path.getsize(file_path) == 0:
                                 return
                             else:
-                                encry_compr(key, data_to_process)
+                                encry_compr(key, file_path)
                                 return
+                            
+                if email[-10:] != '@gmail.com':
+                    print("invalid email format")
+                    os.remove(user_key_path+f"\\{username}_key.key")
+                    if os.path.getsize(file_path) == 0:
+                        return
+                    else:
+                        encry_compr(key, file_path)
+                        return
+                    
                 if len(username)-1 < 4 and len(password)-1 < 8:
                     print("Username must be more than 3 characters long and password must be 8 or more characters")
+                    os.remove(user_key_path+f"\\{username}_key.key")
                     if os.path.getsize(file_path) == 0:
                         return
                     else:
-                        encry_compr(key, data_to_process)
+                        encry_compr(key, file_path)
                         return
+                    
                 elif len(username)-1 < 4 or len(username)-1 > 20:
                     print("Username must be more than 3 characters long")
+                    os.remove(user_key_path+f"\\{username}_key.key")
                     if os.path.getsize(file_path) == 0:
                         return
                     else:
-                        encry_compr(key, data_to_process)
+                        encry_compr(key, file_path)
                         return
+                    
                 elif len(password)-1 < 4 or len(password)-1 > 20:
                     print("Password must be 8 or more characters")
+                    os.remove(user_key_path+f"\\{username}_key.key")
                     if os.path.getsize(file_path) == 0:
                         return
                     else:
-                        encry_compr(key, data_to_process)
+                        encry_compr(key, file_path)
                         return
+                    
                 for char in username:
                     if char in unallowed:
                         print("Invalid character(s)")
+                        os.remove(user_key_path+f"\\{username}_key.key")
                         if os.path.getsize(file_path) == 0:
                             return
                         else:
-                            encry_compr(key, data_to_process)
+                            encry_compr(key, file_path)
                             return
-                        
+
                 with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
                     contents = ver_key.read()
+                    
                 uri = pyotp.totp.TOTP(contents).provisioning_uri( 
                 name=username, 
                 issuer_name='GalacticCoder')
@@ -150,26 +177,29 @@ def account():
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
                 sign.write(f'{hash_password.decode("utf-8")}\n')
+                sign.write(f'{email}\n')
                 sign.write(f'---*end of {username}*---\n')
+
                 print("Sign up successful")
 
-            encry_compr(key, data_to_process)
+            encry_compr(key, file_path)
 
         elif sign_up == 'n':
-            os.remove(f"{username}_key.key")
-            os.remove(user_key_path+f"{username}_key.key")
+            os.remove(qr+f"\\{username}_qr.png")
+            os.remove(user_key_path+f"\\{username}_key.key")
             if os.path.getsize(file_path) == 0:
                 return
             else:
-                encry_compr(key, data_to_process)
+                encry_compr(key, file_path)
                 return
         else:
+            os.remove(user_key_path+f"\\{username}_key.key")
             if os.path.getsize(file_path) == 0:
                 print("Invalid option. Exiting")
                 return
             else:
                 print("Invalid option. Exiting")
-                encry_compr(key, data_to_process)
+                encry_compr(key, file_path)
                 return
     except KeyboardInterrupt:
         if os.path.getsize(file_path) == 0:
@@ -177,15 +207,16 @@ def account():
             return
         else:
             print("Operation canceled by user")
-            encry_compr(key, data_to_process)
+            encry_compr(key, file_path)
             return
     except Exception as Error:
+        os.remove(user_key_path+f"\\{username}_key.key")
         if os.path.getsize(file_path) == 0:
             print(Error)
             return
         else:
             print(Error)
-            encry_compr(key, data_to_process)
+            encry_compr(key, file_path)
             return
 
 account()
