@@ -25,28 +25,20 @@ def masked_input(prompt='Password: '):
     return password
 
 def extract_lines(username, file_path):
-    start_pattern = re.compile(r'---{}---'.format(re.escape(username)))
-    end_pattern = re.compile(r'---\*end of {}\*---'.format(re.escape(username)))
+    lines_between_patterns = []
 
-    found_lines = []
-
-    with open(file_path, 'r') as file:
+    with open(file_path) as fp:
         inside_block = False
-
-        for line in file:
-            if start_pattern.search(line):
+        
+        for line in fp:
+            if '---{}---'.format(username) in line:
                 inside_block = True
-            elif end_pattern.search(line):
+            elif '---*end of {}*---'.format(username) in line:
                 inside_block = False
-                break
+            elif inside_block:
+                lines_between_patterns.append(line.strip())
 
-            if inside_block:
-                found_lines.append(line.strip())
-
-    if found_lines and username in found_lines[0]:
-        return found_lines[1:3] if len(found_lines) >= 3 else []
-    else:
-        return []
+    return lines_between_patterns
 
 def account():
     try:
@@ -65,6 +57,7 @@ def account():
             msg = lines[11].strip().replace('msg=', '').replace('"', '')
 
         decry_decom(key, file_path)
+
         print("|------*Login*------|")
         username = input("Username: ")
         password = masked_input()
@@ -80,12 +73,11 @@ def account():
         hash_password = bcrypt.hashpw(bytes_password, salt)
 
         lines = extract_lines(username, file_path)
-        # print(lines[1]+'\n')
 
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == :
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == lines[2]:
             with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
                 contents = f.read()
-            print("email found")
+            print("Account found successfully")
             send_email(sender_email=sendr_email,
                     sender_password=sendr_pass,
                     recipient_email=email, 
@@ -93,10 +85,10 @@ def account():
                     message=msg,
                     attachment_path=qr+f'\\{username}_qr.png')
             totp = pyotp.TOTP(contents)
-            verification = totp.verify(input("Enter the Code : "))
+            verification = totp.verify(input("Enter the Code: "))
 
             if verification:
-                print("Login verification successful")
+                print("Login verification successful") #work on something to get access to when login is successful
                 encry_compr(key, file_path)
                 return
             else:
@@ -109,10 +101,19 @@ def account():
         if sign_up == 'y':
             with open(file_path, 'a') as sign:
                 with open(file_path, 'r') as file:
-                    for line in file:
-                        if re.search(r'---{}---'.format(re.escape(username)), line):
-                            print("Username is already in use\n")
+                    find_e = file.readlines()
+                    for i in find_e:
+                        if i.find(email) != -1:
+                            print("Email is already in use.")
                             os.remove(user_key_path+f"\\{username}_key.key")
+                            if os.path.getsize(file_path) == 0:
+                                return
+                            else:
+                                encry_compr(key, file_path)
+                                return
+                    for line in file:
+                        if re.search(r'---{}---'.format(re.escape(username)), line) and os.path.exists(user_key_path+f'\\{username}_key.key') and os.path.exists(qr+f'\\{username}_qr.png'):
+                            print("Username is already in use\n")
                             if os.path.getsize(file_path) == 0:
                                 return
                             else:
@@ -127,7 +128,7 @@ def account():
                     else:
                         encry_compr(key, file_path)
                         return
-                    
+            
                 if len(username)-1 < 4 and len(password)-1 < 8:
                     print("Username must be more than 3 characters long and password must be 8 or more characters")
                     os.remove(user_key_path+f"\\{username}_key.key")
@@ -185,8 +186,6 @@ def account():
             encry_compr(key, file_path)
 
         elif sign_up == 'n':
-            os.remove(qr+f"\\{username}_qr.png")
-            os.remove(user_key_path+f"\\{username}_key.key")
             if os.path.getsize(file_path) == 0:
                 return
             else:
