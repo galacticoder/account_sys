@@ -77,24 +77,30 @@ def account():
         if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == lines[2]:
             with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
                 contents = f.read()
+
             print("Account found successfully")
+
             send_email(sender_email=sendr_email,
                     sender_password=sendr_pass,
                     recipient_email=email, 
                     subject=sub,
                     message=msg,
                     attachment_path=qr+f'\\{username}_qr.png')
+
             totp = pyotp.TOTP(contents)
-            verification = totp.verify(input("Enter the Code: "))
+            user_input_code = input("Enter the Code: ")
+
+            verification = totp.verify(user_input_code)
 
             if verification:
-                print("Login verification successful") #work on something to get access to when login is successful
+                print("Login verification successful")
                 encry_compr(key, file_path)
                 return
             else:
                 print("Login verification unsuccessful")
                 encry_compr(key, file_path)
                 return
+
 
         sign_up = input('Account not found. Would you like to sign up using these credentials? (y/n): ').lower()
 
@@ -105,13 +111,12 @@ def account():
                     for i in find_e:
                         if i.find(email) != -1:
                             print("Email is already in use.")
-                            os.remove(user_key_path+f"\\{username}_key.key")
                             if os.path.getsize(file_path) == 0:
                                 return
                             else:
                                 encry_compr(key, file_path)
                                 return
-                    for line in file:
+                    for line in find_e:
                         if re.search(r'---{}---'.format(re.escape(username)), line) and os.path.exists(user_key_path+f'\\{username}_key.key') and os.path.exists(qr+f'\\{username}_qr.png'):
                             print("Username is already in use\n")
                             if os.path.getsize(file_path) == 0:
