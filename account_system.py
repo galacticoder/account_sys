@@ -1,4 +1,4 @@
-import re #make it so the username is saved as key and qr code dedicated to that user and then save the user key in a different folder and the qr codes maybe
+import re #getting an error when sending email, fix it
 import bcrypt
 import msvcrt
 from compress import encry_compr, decry_decom
