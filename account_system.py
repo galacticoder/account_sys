@@ -7,6 +7,7 @@ import qrcode
 import os
 import shutil
 from email_sender import *
+import sockets
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -97,7 +98,7 @@ def account():
 
             user_input_code = input("Enter the Code: ")
             verification = hotp.verify(user_input_code, counter)
-
+            
             if verification:
                 print("Login verification successful") #error always showing unsuccessful
                 encry_compr(key, file_path)
@@ -196,7 +197,14 @@ def account():
 
             encry_compr(key, file_path)
 
-        elif sign_up == 'n':
+        elif sign_up == 'n':#add if username exists dont delete key but if it doesnt then delete it
+            if os.path.exists(f"{user_key_path}\\{username}_key.key") == True:
+                os.remove(f"{user_key_path}\\{username}_key.key")
+                encry_compr(key, file_path)
+                return
+            elif os.path.exists(f"{user_key_path}\\{username}_key.key") == False:
+                encry_compr(key, file_path)
+                return
             if os.path.getsize(file_path) == 0:
                 return
             else:
