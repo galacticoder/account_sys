@@ -45,6 +45,7 @@ def account():
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
+            counter = lines[1].strip().replace('c=', '')
             unallowed = lines[2].strip().replace('unallowed=', '')
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
             secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
@@ -73,13 +74,14 @@ def account():
         salt = bcrypt.gensalt(12)
         email_salt = bcrypt.gensalt(12)
         hash_password = bcrypt.hashpw(bytes_password, salt)
-        hash_email = bcrypt.hashpw(bytes_email, salt)
+        hash_email = bcrypt.hashpw(bytes_email, email_salt)
 
         lines = extract_lines(username, file_path)
 
         if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bcrypt.checkpw(bytes_email, lines[2].encode('utf-8')):
             with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
                 contents = f.read()
+                hotp = pyotp.HOTP(contents)
 
             print("Account found successfully")
 
@@ -89,11 +91,12 @@ def account():
                     subject=sub,
                     message=msg,
                     attachment_path=qr+f'\\{username}_qr.png')
+            
+            counter = int(counter)
+            counter += 1
 
-            totp = pyotp.TOTP(contents)
             user_input_code = input("Enter the Code: ")
-
-            verification = totp.verify(user_input_code)
+            verification = hotp.verify(user_input_code, counter)
 
             if verification:
                 print("Login verification successful") #error always showing unsuccessful

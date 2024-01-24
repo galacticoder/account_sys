@@ -1,5 +1,5 @@
 key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\key.key"
-
+c=123456
 unallowed=[",", "}", "{", "\\", "|", ";", ">", "<", "[", "]", "%", ":", "/", "*", "$", "@", "!", "^", "&", ".", "#", "+", "=", "-"," "]
 file_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\sign_in.txt"
 secret_key="siomeodsiklfjdshjfhjsdil8902893472918"
