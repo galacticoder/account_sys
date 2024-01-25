@@ -1,4 +1,4 @@
-import re #getting an error when sending email, fix it
+import re #add where it finds the users ip address and when the ip address is trying to connect to the account from a different ip thats not recognized it sends an email confirming if its them and if they want to authorize that ip address to access their account
 import bcrypt
 import msvcrt
 from compress import encry_compr, decry_decom
@@ -7,7 +7,7 @@ import qrcode
 import os
 import shutil
 from email_sender import *
-import sockets
+import socket
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -64,6 +64,9 @@ def account():
         username = input("Username: ")
         password = masked_input()
         email = input("Email(2fa)(only google emails allowed): ")
+        
+        hostname = socket.gethostname()
+        aa = socket.gethostbyname(hostname)
 
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
@@ -73,9 +76,11 @@ def account():
         bytes_password = password.encode('utf-8')
         bytes_email = email.encode('utf-8')
         salt = bcrypt.gensalt(12)
+        a_salt = bcrypt.gensalt(12)
         email_salt = bcrypt.gensalt(12)
         hash_password = bcrypt.hashpw(bytes_password, salt)
         hash_email = bcrypt.hashpw(bytes_email, email_salt)
+        hash_a = bcrypt.hashpw(bytes_email, a_salt)
 
         lines = extract_lines(username, file_path)
 
@@ -191,6 +196,7 @@ def account():
                 sign.write(f'{username}\n')
                 sign.write(f'{hash_password.decode("utf-8")}\n')
                 sign.write(f'{hash_email.decode("utf-8")}\n')
+                sign.write(f'{hash_a.decode("utf-8")}\n')
                 sign.write(f'---*end of {username}*---\n')
 
                 print("Sign up successful")
