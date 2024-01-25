@@ -8,6 +8,11 @@ import os
 import shutil
 from email_sender import *
 import socket
+import http.server
+import socketserver
+import webbrowser
+import requests
+import json
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -43,6 +48,10 @@ def extract_lines(username, file_path):
 
 def account():
     try:
+    #     handler = http.server.SimpleHTTPRequestHandler
+    #     httpd = socketserver.TCPServer(("localhost", 8000), handler)
+    #     webbrowser.open("http://localhost:8000")
+    #     httpd.serve_forever()
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
@@ -61,9 +70,9 @@ def account():
         decry_decom(key, file_path)
 
         print("|------*Login*------|")
-        username = input("Username: ")
-        password = masked_input()
-        email = input("Email(2fa)(only google emails allowed): ")
+        username = input("Username: ").strip()
+        password = masked_input().strip()
+        email = input("Email(2fa)(only google emails allowed): ").strip()
         
         hostname = socket.gethostname()
         aa = socket.gethostbyname(hostname)
@@ -75,21 +84,27 @@ def account():
 
         bytes_password = password.encode('utf-8')
         bytes_email = email.encode('utf-8')
+        bytes_aa = aa.encode('utf-8')
         salt = bcrypt.gensalt(12)
         a_salt = bcrypt.gensalt(12)
         email_salt = bcrypt.gensalt(12)
         hash_password = bcrypt.hashpw(bytes_password, salt)
         hash_email = bcrypt.hashpw(bytes_email, email_salt)
-        hash_a = bcrypt.hashpw(bytes_email, a_salt)
+        hash_a = bcrypt.hashpw(bytes_aa, a_salt)
 
         lines = extract_lines(username, file_path)
+        print(lines)
 
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bcrypt.checkpw(bytes_email, lines[2].encode('utf-8')):
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bcrypt.checkpw(bytes_email, lines[2].encode('utf-8')) and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
+            print("account found")
+            encry_compr(key, file_path)
+            return
+        
+        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bcrypt.checkpw(bytes_email, lines[2].encode('utf-8')) and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
             with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
                 contents = f.read()
-                hotp = pyotp.HOTP(contents)
 
-            print("Account found successfully")
+            print("Ip Address unathorized check your email for verification")
 
             send_email(sender_email=sendr_email,
                     sender_password=sendr_pass,
@@ -97,22 +112,19 @@ def account():
                     subject=sub,
                     message=msg,
                     attachment_path=qr+f'\\{username}_qr.png')
-            
-            counter = int(counter)
-            counter += 1
+            totp = pyotp.TOTP(contents)
 
             user_input_code = input("Enter the Code: ")
-            verification = hotp.verify(user_input_code, counter)
+            verification = totp.verify(user_input_code)
             
             if verification:
                 print("Login verification successful") #error always showing unsuccessful
                 encry_compr(key, file_path)
                 return
             else:
-                print("Login verification unsuccessful")
+                print("Login verification failed")
                 encry_compr(key, file_path)
                 return
-
 
         sign_up = input('Account not found. Would you like to sign up using these credentials? (y/n): ').lower()
 
@@ -121,7 +133,7 @@ def account():
                 with open(file_path, 'r') as file:
                     find_e = file.readlines()
                     for i in find_e:
-                        if i.find(email) != -1:
+                        if i.find(hash_email.decode("utf-8")) != -1:#problem still letting users sign up with already used
                             print("Email is already in use.")
                             if os.path.getsize(file_path) == 0:
                                 return
@@ -145,6 +157,12 @@ def account():
                     else:
                         encry_compr(key, file_path)
                         return
+                    
+                # response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key=d2cc1e7dc7c64f78b66ed5b843cc5689&email={email}")
+                # result_dict = json.loads(response.content.decode('utf-8'))
+
+                # print(result_dict)
+                # print(response.status_code)
             
                 if len(username)-1 < 4 and len(password)-1 < 8:
                     print("Username must be more than 3 characters long and password must be 8 or more characters")
