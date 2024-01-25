@@ -132,14 +132,6 @@ def account():
             with open(file_path, 'a') as sign:
                 with open(file_path, 'r') as file:
                     find_e = file.readlines()
-                    for i in find_e:
-                        if i.find(hash_email.decode("utf-8")) != -1:#problem still letting users sign up with already used
-                            print("Email is already in use.")
-                            if os.path.getsize(file_path) == 0:
-                                return
-                            else:
-                                encry_compr(key, file_path)
-                                return
                     for line in find_e:
                         if re.search(r'---{}---'.format(re.escape(username)), line) and os.path.exists(user_key_path+f'\\{username}_key.key') and os.path.exists(qr+f'\\{username}_qr.png'):
                             print("Username is already in use\n")
@@ -148,6 +140,14 @@ def account():
                             else:
                                 encry_compr(key, file_path)
                                 return
+                    for j in find_e:
+                            if j.find(hash_email.decode("utf-8")) != -1:#problem still letting users sign up with already used
+                                print("Email is already in use.")
+                                if os.path.getsize(file_path) == 0:
+                                    return
+                                else:
+                                    encry_compr(key, file_path)
+                                    return
                             
                 if email[-10:] != '@gmail.com':
                     print("invalid email format")
