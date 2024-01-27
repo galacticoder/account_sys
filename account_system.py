@@ -1,4 +1,4 @@
-import re #add where it finds the users ip address and when the ip address is trying to connect to the account from a different ip thats not recognized it sends an email confirming if its them and if they want to authorize that ip address to access their account
+import re #make the ip thing work
 import bcrypt
 import msvcrt
 from compress import encry_compr, decry_decom
@@ -13,7 +13,7 @@ import socketserver
 import webbrowser
 import requests
 import json
-
+import uuid
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -47,105 +47,6 @@ def extract_lines(username, file_path):
 
     return lines_between_patterns
 
-def sign_in():
-    try:
-        global salt
-    #     handler = http.server.SimpleHTTPRequestHandler
-    #     httpd = socketserver.TCPServer(("localhost", 8000), handler)
-    #     webbrowser.open("http://localhost:8000")
-    #     httpd.serve_forever()
-        with open('params.txt', 'r') as params:
-            lines = params.readlines()
-            key = lines[0].strip().replace('key=', '').replace('"', '')
-            unallowed = lines[2].strip().replace('unallowed=', '')
-            file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
-            secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
-            qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
-            user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
-            sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
-            sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
-            sub = lines[10].strip().replace('sub=', '').replace('"', '')
-            msg = lines[11].strip().replace('msg=', '').replace('"', '')
-
-        decry_decom(key, file_path)
-
-        print("|------*Login*------|")
-        username = input("Username: ").strip()
-        password = masked_input().strip()
-        email = input("Email(2fa)(only google emails allowed): ").strip()
-
-        with open(f"{username}_key.key",'w') as user_key:
-            user_key.write(pyotp.random_base32())
-        
-        shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
-        
-        hostname = socket.gethostname()
-        aa = socket.gethostbyname(hostname)
-        
-        bytes_email = email.encode('utf-8')
-        bytes_password = password.encode('utf-8')
-        bytes_aa = aa.encode('utf-8')
-
-        lines = extract_lines(username, file_path)
-        print(lines)
-        
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bcrypt.checkpw(bytes_email, lines[2].encode('utf-8')) and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
-            with open(f"{user_key_path}\\{username}_key.key", 'r') as f:
-                contents = f.read()
-
-            print("Ip Address unathorized check your email for verification")
-
-            send_email(sender_email=sendr_email,
-                    sender_password=sendr_pass,
-                    recipient_email=email, 
-                    subject=sub,
-                    message=msg,
-                    attachment_path=qr+f'\\{username}_qr.png')
-            totp = pyotp.TOTP(contents)
-
-            user_input_code = input("Enter the Code: ")
-            verification = totp.verify(user_input_code)
-            
-            if verification:
-                print("Login verification successful") #error always showing unsuccessful
-                encry_compr(key, file_path)
-                return
-            else:
-                print("Login verification failed")
-                encry_compr(key, file_path)
-                return
-        
-        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
-            print("account found")
-            encry_compr(key, file_path)
-            return
-        
-        else:
-            ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
-            if ask == "y":
-                print("goingto sign up thing")#use sign up function
-            if ask == 'n':
-                encry_compr(key, file_path)
-                return
-            
-    except KeyboardInterrupt:
-        if os.path.getsize(file_path) == 0:
-            print("\nOperation canceled by user")
-            return
-        else:
-            print("Operation canceled by user")
-            encry_compr(key, file_path)
-            return
-    except Exception as Error:
-        os.remove(user_key_path+f"\\{username}_key.key")
-        if os.path.getsize(file_path) == 0:
-            print(Error)
-            return
-        else:
-            print(Error)
-            encry_compr(key, file_path)
-            return
-
 def sign_up():
     try:
         global salt
@@ -164,7 +65,7 @@ def sign_up():
         
         decry_decom(key, file_path)
 
-        print("|------*Login*------|")
+        print("|------*Sign up*------|")
         username = input("Username: ").strip()
         password = masked_input().strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
@@ -175,10 +76,11 @@ def sign_up():
         shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
         
         hostname = socket.gethostname()
-        aa = socket.gethostbyname(hostname)
+        aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
+        bytes_email = email.encode("utf-8")
         
         salt = bcrypt.gensalt(12)
         
@@ -188,7 +90,7 @@ def sign_up():
         lines = extract_lines(username, file_path)
         print(lines)
         
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
             print("account found")
             encry_compr(key, file_path)
             return
@@ -199,6 +101,7 @@ def sign_up():
                 for line in find_e:
                     if email in line:
                         print("Email is already in use.")
+                        os.remove(user_key_path+f'\\{username}_key.key')
                         encry_compr(key, file_path)
                         return
                 for line in find_e:
@@ -218,7 +121,6 @@ def sign_up():
                 else:
                     encry_compr(key, file_path)
                     return
-                
             # response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key=d2cc1e7dc7c64f78b66ed5b843cc5689&email={email}")
             # result_dict = json.loads(response.content.decode('utf-8'))
 
@@ -277,12 +179,84 @@ def sign_up():
                 sign.write(f'{email}\n')
                 sign.write(f'{hash_a.decode("utf-8")}\n')
                 sign.write(f'---*end of {username}*---\n')
-                
-                print(f'{hash_a.decode("utf-8")}\n')
+
                 print("Sign up successful")
 
         encry_compr(key, file_path)
 
+    except KeyboardInterrupt:
+        if os.path.getsize(file_path) == 0:
+            print("\nOperation canceled by user")
+            return
+        else:
+            print("Operation canceled by user")
+            encry_compr(key, file_path)
+            return
+    except Exception as Error:
+        os.remove(user_key_path+f"\\{username}_key.key")
+        if os.path.getsize(file_path) == 0:
+            print(Error)
+            return
+        else:
+            print(Error)
+            encry_compr(key, file_path)
+            return
+
+def sign_in():
+    try:
+        with open('params.txt', 'r') as params:
+            lines = params.readlines()
+            key = lines[0].strip().replace('key=', '').replace('"', '')
+            unallowed = lines[2].strip().replace('unallowed=', '')
+            file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
+            secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
+            qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
+            user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
+            sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
+            sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
+            sub = lines[10].strip().replace('sub=', '').replace('"', '')
+            msg = lines[11].strip().replace('msg=', '').replace('"', '')
+
+        decry_decom(key, file_path)
+
+        print("|------*Login*------|")
+        username = input("Username: ").strip()
+        password = masked_input().strip()
+        email = input("Email(2fa)(only google emails allowed): ").strip()
+
+        with open(f"{username}_key.key",'w') as user_key:
+            user_key.write(pyotp.random_base32())
+        
+        shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
+        
+        aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
+        
+        bytes_email = email.encode('utf-8')
+        bytes_password = password.encode('utf-8')
+        bytes_aa = aa.encode('utf-8')
+        
+        lines = extract_lines(username, file_path)
+        print(lines)
+        
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
+            print("account found")
+            encry_compr(key, file_path)
+            return
+        
+        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
+            print("account found")
+            encry_compr(key, file_path)
+            return
+        
+        else:
+            ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
+            if ask == "y":
+                os.remove(user_key_path+f'\\{username}_key.key')
+                sign_up() #use sign up function
+            if ask == 'n':
+                encry_compr(key, file_path)
+                return
+            
     except KeyboardInterrupt:
         if os.path.getsize(file_path) == 0:
             print("\nOperation canceled by user")
