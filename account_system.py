@@ -15,6 +15,9 @@ import requests
 import json
 import uuid
 import hashlib
+from passlib.hash import argon2
+import argon2, binascii
+from argon2 import PasswordHasher
 
 sha512_hasher = hashlib.sha512()
 
