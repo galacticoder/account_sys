@@ -55,7 +55,7 @@ def extract_lines(username, file_path):
 
 def sign_up():
     try:
-        global salt, sha512_hasher
+        global sha512_hasher
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
@@ -87,16 +87,17 @@ def sign_up():
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
         bytes_email = email.encode("utf-8")
-        
+        ph = PasswordHasher()
         sha512_hasher.update(bytes_aa)
-        salt = bcrypt.gensalt(12)
-        
-        hash_password = bcrypt.hashpw(bytes_password, salt)
         hash_aa = sha512_hasher.hexdigest()
+        
+        argon2Hasher =  argon2.PasswordHasher(
+            time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
+        hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
         
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
+        if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
             encry_compr(key, file_path)
             return
@@ -180,7 +181,7 @@ def sign_up():
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
-                sign.write(f'{hash_password.decode("utf-8")}\n')
+                sign.write(f'{hash_password}\n')
                 sign.write(f'{email}\n')
                 sign.write(f'{hash_aa}\n')
                 sign.write(f'---*end of {username}*---\n')
@@ -234,18 +235,22 @@ def sign_in():
         bytes_email = email.encode('utf-8')
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
-        
+        ph = PasswordHasher()
         sha512_hasher.update(bytes_aa)
         hash_aa = sha512_hasher.hexdigest()
+
+        argon2Hasher =  argon2.PasswordHasher(
+            time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
+        hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
         
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
+        if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
             encry_compr(key, file_path)
             return
         
-        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
+        elif lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location need verification")
                 
@@ -268,8 +273,11 @@ def sign_in():
         else:
             ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
             if ask == "y":
-                os.remove(user_key_path+f'\\{username}_key.key')
-                sign_up() #use sign up function
+                if os.path.exists(user_key_path+f'\\{username}_key.key'):
+                    sign_up() #use sign up function
+                else:  
+                    os.remove(user_key_path+f'\\{username}_key.key')
+                    sign_up() #use sign up function
             if ask == 'n':
                 encry_compr(key, file_path)
                 return
