@@ -168,12 +168,10 @@ def sign_up():
             with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
                 contents = ver_key.read()
                 
-                uri = pyotp.HOTP(contents, digest=hashlib.sha512).provisioning_uri(
-                    name=username,
-                    issuer_name='GalacticCoder'
-                )
-                qrcode.make(uri).save(qr + f"\\{username}_qr.png")
-
+                uri = pyotp.totp.TOTP(contents, digest='sha512').provisioning_uri( 
+                name=username, 
+                issuer_name='GalacticCoder')
+                qrcode.make(uri).save(qr+f"\\{username}_qr.png")
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
@@ -247,11 +245,11 @@ def sign_in():
                 with open(user_key_path+f'\\{username}_key.key', 'r') as user_key_file:
                     user_key = user_key_file.read().strip()
 
-                    hotp = pyotp.HOTP(user_key)
+                    totp = pyotp.TOTP(user_key)
                     send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
-                    print(hotp.at(0))
+                    print(totp.now())
                     user_input_otp = input("Enter the OTP: ")
-                    is_valid = hotp.verify(user_input_otp)#verificication errors fixed
+                    is_valid = totp.verify(user_input_otp)#verificication errors fixed
                     
                     if is_valid:
                         print("verification successful")#make something where it can access after succeful verification
