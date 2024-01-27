@@ -1,4 +1,4 @@
-import re #make the ip thing work
+import re #if an email is a temp email or not real then cancel account creation
 import bcrypt
 import msvcrt
 from compress import encry_compr, decry_decom
@@ -14,6 +14,7 @@ import webbrowser
 import requests
 import json
 import uuid
+import hashlib
 
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
@@ -167,10 +168,12 @@ def sign_up():
             with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
                 contents = ver_key.read()
                 
-                uri = pyotp.totp.TOTP(contents).provisioning_uri( 
-                name=username, 
-                issuer_name='GalacticCoder')
-                qrcode.make(uri).save(qr+f"\\{username}_qr.png")
+                uri = pyotp.HOTP(contents, digest=hashlib.sha512).provisioning_uri(
+                    name=username,
+                    issuer_name='GalacticCoder'
+                )
+                qrcode.make(uri).save(qr + f"\\{username}_qr.png")
+
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
@@ -244,14 +247,14 @@ def sign_in():
                 with open(user_key_path+f'\\{username}_key.key', 'r') as user_key_file:
                     user_key = user_key_file.read().strip()
 
-                    totp = pyotp.TOTP(user_key)
+                    hotp = pyotp.HOTP(user_key)
                     send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
-                    print(totp.now())
+                    print(hotp.at(0))
                     user_input_otp = input("Enter the OTP: ")
-                    is_valid = totp.verify(user_input_otp)
+                    is_valid = hotp.verify(user_input_otp)#verificication errors fixed
                     
                     if is_valid:
-                        print("verification successful")
+                        print("verification successful")#make something where it can access after succeful verification
                     else:
                         print("verification unsuccessful")
                         encry_compr(key, file_path)
@@ -275,7 +278,7 @@ def sign_in():
             encry_compr(key, file_path)
             return
     except Exception as Error:
-        # os.remove(user_key_path+f"\\{username}_key.key")
+        print("unexpected error occured")
         if os.path.getsize(file_path) == 0:
             print(Error)
             return
@@ -283,8 +286,6 @@ def sign_in():
             print(Error)
             encry_compr(key, file_path)
             return
-        
-        
         
 try:
     option = input("Sign in or Sign up?(sg/su): ").lower()
