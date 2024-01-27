@@ -170,8 +170,7 @@ def sign_up():
                 uri = pyotp.totp.TOTP(contents).provisioning_uri( 
                 name=username, 
                 issuer_name='GalacticCoder')
-                qrcode.make(uri).save(f"{username}_qr.png")
-                shutil.move(f"{username}_qr.png", qr+f'\\{username}_qr.png')
+                qrcode.make(uri).save(qr+f"\\{username}_qr.png")
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
@@ -223,10 +222,6 @@ def sign_in():
         username = input("Username: ").strip()
         password = masked_input().strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
-
-        if os.path.exists(user_key_path+f'{username}_key.key'):
-            with open(user_key_path+f'{username}_key.key', 'r') as user_key_file:
-                user_key = user_key_file.read().strip()
         
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
@@ -242,20 +237,25 @@ def sign_in():
             encry_compr(key, file_path)
             return
         
-        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
+        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:                            
+            if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location need verification")
-            
-                totp = pyotp.TOTP(user_key)
-                send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
-                user_input_otp = input("Enter the OTP: ")
-                is_valid = totp.verify(user_input_otp)
                 
-                if is_valid:
-                    print("verification successful")
-                else:
-                    print("verification unsuccessful")
-                    encry_compr(key, file_path)
-                    return
+                with open(user_key_path+f'\\{username}_key.key', 'r') as user_key_file:
+                    user_key = user_key_file.read().strip()
+
+                    totp = pyotp.TOTP(user_key)
+                    send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
+                    print(totp.now())
+                    user_input_otp = input("Enter the OTP: ")
+                    is_valid = totp.verify(user_input_otp)
+                    
+                    if is_valid:
+                        print("verification successful")
+                    else:
+                        print("verification unsuccessful")
+                        encry_compr(key, file_path)
+                        return
         
         else:
             ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
@@ -275,7 +275,7 @@ def sign_in():
             encry_compr(key, file_path)
             return
     except Exception as Error:
-        os.remove(user_key_path+f"\\{username}_key.key")
+        # os.remove(user_key_path+f"\\{username}_key.key")
         if os.path.getsize(file_path) == 0:
             print(Error)
             return
@@ -283,6 +283,9 @@ def sign_in():
             print(Error)
             encry_compr(key, file_path)
             return
+        
+        
+        
 try:
     option = input("Sign in or Sign up?(sg/su): ").lower()
 
