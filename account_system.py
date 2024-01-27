@@ -16,6 +16,8 @@ import json
 import uuid
 import hashlib
 
+sha512_hasher = hashlib.sha512()
+
 def masked_input(prompt='Password: '):
     print(prompt, end='', flush=True)
     password = ''
@@ -50,7 +52,7 @@ def extract_lines(username, file_path):
 
 def sign_up():
     try:
-        global salt
+        global salt, sha512_hasher
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
@@ -76,22 +78,22 @@ def sign_up():
         
         shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
         
-        hostname = socket.gethostname()
+        # hostname = socket.gethostname()
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
         bytes_email = email.encode("utf-8")
         
+        sha512_hasher.update(bytes_aa)
         salt = bcrypt.gensalt(12)
         
         hash_password = bcrypt.hashpw(bytes_password, salt)
-        hash_a = bcrypt.hashpw(bytes_aa, salt)
-
-        lines = extract_lines(username, file_path)
-        print(lines)
+        hash_aa = sha512_hasher.hexdigest()
         
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
+        lines = extract_lines(username, file_path)
+        
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
             encry_compr(key, file_path)
             return
@@ -168,7 +170,7 @@ def sign_up():
             with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
                 contents = ver_key.read()
                 
-                uri = pyotp.totp.TOTP(contents, digest='sha512').provisioning_uri( 
+                uri = pyotp.totp.TOTP(contents, digest=hashlib.sha512).provisioning_uri( 
                 name=username, 
                 issuer_name='GalacticCoder')
                 qrcode.make(uri).save(qr+f"\\{username}_qr.png")
@@ -177,7 +179,7 @@ def sign_up():
                 sign.write(f'{username}\n')
                 sign.write(f'{hash_password.decode("utf-8")}\n')
                 sign.write(f'{email}\n')
-                sign.write(f'{hash_a.decode("utf-8")}\n')
+                sign.write(f'{hash_aa}\n')
                 sign.write(f'---*end of {username}*---\n')
 
                 print("Sign up successful")
@@ -230,15 +232,17 @@ def sign_in():
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
         
-        lines = extract_lines(username, file_path)
-        print(lines)
+        sha512_hasher.update(bytes_aa)
+        hash_aa = sha512_hasher.hexdigest()
         
-        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')):
+        lines = extract_lines(username, file_path)
+        
+        if lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
             encry_compr(key, file_path)
             return
         
-        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:                            
+        elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location need verification")
                 
