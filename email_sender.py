@@ -17,7 +17,7 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     msg['Subject'] = subject
 
     # Attach the message body as HTML
-    msg.attach(MIMEText(f'<p style="font-size: 16px; font-weight: bold;">{message}</p>', 'html'))
+    msg.attach(MIMEText(f'<div style="text-align: center;"><p style="font-size: 16px; font-weight: bold;">{message}</p></div>'))
 
     # Attach the file if provided
     if attachment_path:
@@ -44,3 +44,12 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     finally:
         # Quit the SMTP server
         server.quit()
+
+# sender_email = "galacticoderr@gmail.com"
+# sender_password = "jlnw esrt tjlu bnfp"
+# recipient_email = "ilovevibingtolofii@gmail.com"
+# subject = "Centered Text in Email"
+# message = "This is an example email with centered <strong>bold text</strong> and <span style='font-size: 18px;'>bigger font</span>."
+# # attachment_path = "path/to/your/file.txt"  # Replace with the actual path or set to None if no attachment
+
+# send_email(sender_email, sender_password, recipient_email, subject, message, attachment_path=None)

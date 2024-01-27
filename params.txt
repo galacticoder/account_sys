@@ -9,7 +9,7 @@ tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\keys"
 sender_email="galacticoderr@gmail.com"
 sender_pass="jlnw esrt tjlu bnfp"
 sub="Bold Text and Bigger Font"
-msg="This is an example email with <strong>bold text</strong> and <span style='font-size: 18px;'>bigger font</span>."
+msg="This is an example email with centered <strong>bold text</strong> and <span style='font-size: 18px;'>bigger font</span>."
 
 
 
