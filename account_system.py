@@ -245,9 +245,17 @@ def sign_in():
         
         elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
             print("account found but your signing in from a different location need verification")
+            totp = pyotp.TOTP(user_key)
             send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
-            encry_compr(key, file_path)
-            return
+            user_input_otp = input("Enter the OTP: ")
+            is_valid = totp.verify(user_key_path+f'\\{username}_key.key')
+            
+            if is_valid:
+                print("verification successful")
+            else:
+                print("verification unsuccessful")
+                encry_compr(key, file_path)
+                return
         
         else:
             ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
@@ -275,14 +283,19 @@ def sign_in():
             print(Error)
             encry_compr(key, file_path)
             return
+try:
+    option = input("Sign in or Sign up?(sg/su): ").lower()
 
-option = input("Sign in or Sign up?(sg/su): ").lower()
+    if option == 'su':
+        sign_up()
 
-if option == 'su':
-    sign_up()
-
-elif option == 'sg':
-    sign_in()
+    elif option == 'sg':
+        sign_in()
+        
+    else:
+        print("not an option")
+except KeyboardInterrupt:
+    print("User canceled operation")
+    exit
     
-else:
-    print("not an option")
+    
