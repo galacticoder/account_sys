@@ -244,7 +244,8 @@ def sign_in():
             return
         
         elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
-            print("account found")
+            print("account found but your signing in from a different location need verification")
+            send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
             encry_compr(key, file_path)
             return
         
