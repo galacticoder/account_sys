@@ -224,10 +224,9 @@ def sign_in():
         password = masked_input().strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
 
-        with open(f"{username}_key.key",'w') as user_key:
-            user_key.write(pyotp.random_base32())
-        
-        shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
+        if os.path.exists(user_key_path+f'{username}_key.key'):
+            with open(user_key_path+f'{username}_key.key', 'r') as user_key_file:
+                user_key = user_key_file.read().strip()
         
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
@@ -244,18 +243,19 @@ def sign_in():
             return
         
         elif lines and bcrypt.checkpw(bytes_password, lines[1].encode('utf-8')) and bytes_email == lines[2].encode('utf-8') and bcrypt.checkpw(bytes_aa, lines[3].encode('utf-8')) != True:
-            print("account found but your signing in from a different location need verification")
-            totp = pyotp.TOTP(user_key)
-            send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
-            user_input_otp = input("Enter the OTP: ")
-            is_valid = totp.verify(user_key_path+f'\\{username}_key.key')
+                print("account found but your signing in from a different location need verification")
             
-            if is_valid:
-                print("verification successful")
-            else:
-                print("verification unsuccessful")
-                encry_compr(key, file_path)
-                return
+                totp = pyotp.TOTP(user_key)
+                send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
+                user_input_otp = input("Enter the OTP: ")
+                is_valid = totp.verify(user_input_otp)
+                
+                if is_valid:
+                    print("verification successful")
+                else:
+                    print("verification unsuccessful")
+                    encry_compr(key, file_path)
+                    return
         
         else:
             ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
