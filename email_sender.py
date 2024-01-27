@@ -9,15 +9,15 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     smtp_port = 587  # replace with the port for your SMTP server
     smtp_username = sender_email
     smtp_password = sender_password
-
+    
     # Create the email message
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
     msg['Subject'] = subject
 
-    # Attach the message body
-    msg.attach(MIMEText(message, 'plain'))
+    # Attach the message body as HTML
+    msg.attach(MIMEText(f'<p style="font-size: 16px; font-weight: bold;">{message}</p>', 'html'))
 
     # Attach the file if provided
     if attachment_path:

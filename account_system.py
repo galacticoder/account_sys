@@ -259,7 +259,7 @@ def sign_in():
 
                     totp = pyotp.TOTP(user_key)
                     send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
-                    print(totp.now())
+                    # print(totp.now())
                     user_input_otp = input("Enter the OTP: ")
                     is_valid = totp.verify(user_input_otp)#verificication errors fixed
                     
