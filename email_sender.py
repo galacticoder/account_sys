@@ -10,9 +10,6 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     smtp_username = sender_email
     smtp_password = sender_password
     
-    with open("C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\templates\\temp\\index.html","r") as temp:
-        content = temp.read()
-    
     # Create the email message
     msg = MIMEMultipart()
     msg['From'] = sender_email

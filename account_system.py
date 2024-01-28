@@ -1,26 +1,17 @@
-import re #if an email is a temp email or not real then cancel account creation #fix same hash being generated for hash_aa and hash_pin
-import bcrypt
+import re
 import msvcrt
 from compress import encry_compr, decry_decom
 import pyotp 
 import os
 import shutil
 from email_sender import *
-import socket
-import http.server
-import socketserver
-import webbrowser
-import requests
-import json
 import uuid
 import hashlib
 from passlib.hash import argon2
-import argon2, binascii
+import argon2
 from argon2 import PasswordHasher
 
-sha512_hasher = hashlib.sha512()
-
-def masked_input(prompt='Password: '):
+def masked_input(prompt):
     print(prompt, end='', flush=True)
     password = ''
     while True:
@@ -54,13 +45,11 @@ def extract_lines(username, file_path):
 
 def sign_up():
     try:
-        global sha512_hasher
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
             unallowed = lines[2].strip().replace('unallowed=', '')
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
-            secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
             user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
             sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
             sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
@@ -71,23 +60,23 @@ def sign_up():
 
         print("|------*Sign up*------|")
         username = input("Username: ").strip()
-        password = masked_input().strip()
+        password = masked_input(prompt='Password: ').strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
-        pin = input("Set pin code: ").strip()
+        pin = masked_input(prompt='Set a pin: ').strip()
 
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
         
         shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
         
-        # hostname = socket.gethostname()
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
         bytes_aa = aa.encode('utf-8')
         bytes_pin = pin.encode('utf-8')
         bytes_email = email.encode("utf-8")
-        sha512_hasher_pin = hashlib.sha512() 
+        sha512_hasher_pin = hashlib.sha512()
         
+        sha512_hasher = hashlib.sha512()
         sha512_hasher.update(bytes_aa)
         hash_aa = sha512_hasher.hexdigest()
         
@@ -103,7 +92,7 @@ def sign_up():
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
                 print("account found")
-                pin = input("Enter the account pin code: ")
+                pin = masked_input(prompt='Enter pin code: ')
                 
                 if hash_pin == lines[4]:
                     print("pin verification succeded")
@@ -141,11 +130,6 @@ def sign_up():
                 else:
                     encry_compr(key, file_path)
                     return
-            # response = requests.get(f"https://emailvalidation.abstractapi.com/v1/?api_key=d2cc1e7dc7c64f78b66ed5b843cc5689&email={email}")
-            # result_dict = json.loads(response.content.decode('utf-8'))
-
-            # print(result_dict)
-            # print(response.status_code)
                                 
             elif len(username)-1 < 4 or len(username)-1 > 20:
                 print("Username must be more than 3 characters long")
@@ -235,7 +219,7 @@ def sign_in():
 
         print("|------*Login*------|")
         username = input("Username: ").strip()
-        password = masked_input().strip()
+        password = masked_input(prompt='Password: ').strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
         
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
@@ -245,19 +229,19 @@ def sign_in():
         bytes_aa = aa.encode('utf-8')
         ph = PasswordHasher()
         sha512_hasher_pin = hashlib.sha512()
+        
+        sha512_hasher = hashlib.sha512()
         sha512_hasher.update(bytes_aa)
         hash_aa = sha512_hasher.hexdigest()
 
         argon2Hasher =  argon2.PasswordHasher(
             time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
-        # hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
-        print(lines)
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
-            pin = input("Enter the account pin code: ")
+            pin = masked_input(prompt='Enter your pin code: ').strip()
             
             bytes_pin = pin.encode('utf-8')
             sha512_hasher_pin = hashlib.sha512()
@@ -277,7 +261,7 @@ def sign_in():
         elif lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location so you need verification")
-                pin = input("Enter the account pin code: ")
+                pin = masked_input(prompt='Enter your pin code: ').strip()
 
             
                 bytes_pin = pin.encode('utf-8')
@@ -294,7 +278,7 @@ def sign_in():
                         totp = pyotp.TOTP(user_key)
                         send_email(sendr_email, sendr_pass, email, sub, totp.now(), attachment_path=None)
                         user_input_otp = input("Enter the OTP: ")
-                        is_valid = totp.verify(user_input_otp)#verificication errors fixed
+                        is_valid = totp.verify(user_input_otp)
                         
                         if is_valid:
                             print("verification successful")#make something where it can access after succeful verification
@@ -314,10 +298,10 @@ def sign_in():
             ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()
             if ask == "y":
                 if os.path.exists(user_key_path+f'\\{username}_key.key'):
-                    sign_up() #use sign up function
+                    sign_up()
                 else:  
                     os.remove(user_key_path+f'\\{username}_key.key')
-                    sign_up() #use sign up function
+                    sign_up()
             if ask == 'n':
                 encry_compr(key, file_path)
                 return
@@ -351,6 +335,7 @@ try:
         
     else:
         print("not an option")
+        
 except KeyboardInterrupt:
     print("User canceled operation")
     exit
