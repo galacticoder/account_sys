@@ -83,16 +83,17 @@ def sign_up():
         # hostname = socket.gethostname()
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
-        bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
         bytes_pin = pin.encode('utf-8')
         bytes_email = email.encode("utf-8")
-        ph = PasswordHasher()
-        sha512_hasher.update(bytes_aa)
-        sha512_hasher.update(bytes_pin)
-        hash_aa = sha512_hasher.hexdigest()
-        hash_pin = sha512_hasher.hexdigest()
+        sha512_hasher_pin = hashlib.sha512() 
         
+        sha512_hasher.update(bytes_aa)
+        hash_aa = sha512_hasher.hexdigest()
+        
+        sha512_hasher_pin.update(bytes_pin)
+        hash_pin = sha512_hasher_pin.hexdigest()
+                
         argon2Hasher =  argon2.PasswordHasher(
             time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
         hash_password = argon2Hasher.hash(password)
@@ -101,23 +102,18 @@ def sign_up():
         print(lines)
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
-            print("account found")
-            pin = input("Enter the account pin code: ")
-            
-            bytes_pin = pin.encode('utf-8')
-            sha512_hasher_pin = hashlib.sha512() 
-            sha512_hasher_pin.update(bytes_pin)
-            hash_pin = sha512_hasher.hexdigest()
-            
-            if hash_pin == lines[4]:
-                print("pin verification succeded")
-                encry_compr(key, file_path)
-                return
-            
-            else:
-                print("pin verification not accepted")
-                encry_compr(key, file_path)
-                return
+                print("account found")
+                pin = input("Enter the account pin code: ")
+                
+                if hash_pin == lines[4]:
+                    print("pin verification succeded")
+                    encry_compr(key, file_path)
+                    return
+                
+                else:
+                    print("pin verification not accepted")
+                    encry_compr(key, file_path)
+                    return
         
         with open(file_path, 'a') as sign:
             with open(file_path, 'r') as file:
@@ -188,7 +184,7 @@ def sign_up():
                         encry_compr(key, file_path)
                         return
 
-            with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
+            with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key: #make it write to the variavbler hash_pin
                 contents = ver_key.read()
 
                 sign.write(f'---{username}---\n')
@@ -248,6 +244,7 @@ def sign_in():
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
         ph = PasswordHasher()
+        sha512_hasher_pin = hashlib.sha512()
         sha512_hasher.update(bytes_aa)
         hash_aa = sha512_hasher.hexdigest()
 
@@ -281,10 +278,11 @@ def sign_in():
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location so you need verification")
                 pin = input("Enter the account pin code: ")
+
             
                 bytes_pin = pin.encode('utf-8')
-                sha512_hasher.update(bytes_pin)
-                hash_pin = sha512_hasher.hexdigest()
+                sha512_hasher_pin.update(bytes_pin)
+                hash_pin = sha512_hasher_pin.hexdigest()
                 
                 if hash_pin == lines[4]:
                     print("pin verification succeded")
