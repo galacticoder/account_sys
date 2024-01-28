@@ -1,8 +1,9 @@
-import re #if an email is a temp email or not real then cancel account creation #fix same hash being generated for hash_aa and hash_pin
+import re #if an email is a temp email or not real then cancel account creation
 import bcrypt
 import msvcrt
 from compress import encry_compr, decry_decom
 import pyotp 
+import qrcode
 import os
 import shutil
 from email_sender import *
@@ -61,6 +62,7 @@ def sign_up():
             unallowed = lines[2].strip().replace('unallowed=', '')
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
             secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
+            qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
             user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
             sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
             sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
@@ -73,7 +75,6 @@ def sign_up():
         username = input("Username: ").strip()
         password = masked_input().strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
-        pin = input("Set pin code: ").strip()
 
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
@@ -85,39 +86,21 @@ def sign_up():
         
         bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
-        bytes_pin = pin.encode('utf-8')
         bytes_email = email.encode("utf-8")
         ph = PasswordHasher()
         sha512_hasher.update(bytes_aa)
-        sha512_hasher.update(bytes_pin)
         hash_aa = sha512_hasher.hexdigest()
-        hash_pin = sha512_hasher.hexdigest()
         
         argon2Hasher =  argon2.PasswordHasher(
             time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
         hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
-        print(lines)
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
-            pin = input("Enter the account pin code: ")
-            
-            bytes_pin = pin.encode('utf-8')
-            sha512_hasher_pin = hashlib.sha512() 
-            sha512_hasher_pin.update(bytes_pin)
-            hash_pin = sha512_hasher.hexdigest()
-            
-            if hash_pin == lines[4]:
-                print("pin verification succeded")
-                encry_compr(key, file_path)
-                return
-            
-            else:
-                print("pin verification not accepted")
-                encry_compr(key, file_path)
-                return
+            encry_compr(key, file_path)
+            return
         
         with open(file_path, 'a') as sign:
             with open(file_path, 'r') as file:
@@ -129,7 +112,7 @@ def sign_up():
                         encry_compr(key, file_path)
                         return
                 for line in find_e:
-                    if re.search(r'---{}---'.format(re.escape(username)), line) and os.path.exists(user_key_path+f'\\{username}_key.key'):
+                    if re.search(r'---{}---'.format(re.escape(username)), line) and os.path.exists(user_key_path+f'\\{username}_key.key') and os.path.exists(qr+f'\\{username}_qr.png'):
                         print("Username is already in use\n")
                         if os.path.getsize(file_path) == 0:
                             return
@@ -190,13 +173,17 @@ def sign_up():
 
             with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key:
                 contents = ver_key.read()
+                
+                uri = pyotp.totp.TOTP(contents, digest=hashlib.sha512).provisioning_uri( 
+                name=username, 
+                issuer_name='GalacticCoder')
+                qrcode.make(uri).save(qr+f"\\{username}_qr.png")
 
                 sign.write(f'---{username}---\n')
                 sign.write(f'{username}\n')
                 sign.write(f'{hash_password}\n')
                 sign.write(f'{email}\n')
                 sign.write(f'{hash_aa}\n')
-                sign.write(f'{hash_pin}\n')
                 sign.write(f'---*end of {username}*---\n')
 
                 print("Sign up successful")
@@ -229,11 +216,12 @@ def sign_in():
             unallowed = lines[2].strip().replace('unallowed=', '')
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
             secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
+            qr = lines[6].strip().replace('qr_code_path=', '').replace('"', '')
             user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
             sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
             sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
             sub = lines[10].strip().replace('sub=', '').replace('"', '')
-            msg = lines[11].strip().replace('msg=', '').replace('"', '')
+            msg = lines[11].strip().replace('msg=', '')
 
         decry_decom(key, file_path)
 
@@ -256,61 +244,60 @@ def sign_in():
         # hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
-        print(lines)
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
-            print("account found")
-            pin = input("Enter the account pin code: ")
-            
-            bytes_pin = pin.encode('utf-8')
-            sha512_hasher_pin = hashlib.sha512()
-            sha512_hasher_pin.update(bytes_pin)
-            hash_pin = sha512_hasher_pin.hexdigest()
-                        
-            if hash_pin == lines[4]:
-                print("pin verification succeded")
-                encry_compr(key, file_path)
-                return
-            
-            else:
-                print("pin verification not accepted")
-                encry_compr(key, file_path)
-                return
+            if os.path.exists(user_key_path+f'\\{username}_key.key'):
+                print("account found")
+                
+                with open(user_key_path+f'\\{username}_key.key', 'r') as user_key_file:
+                    user_key = user_key_file.read().strip()
+
+                    totp = pyotp.TOTP(user_key, interval=60)
+                    send_email(sendr_email, sendr_pass, email, sub, totp.now(), attachment_path=None)
+                    user_input_otp = input("Enter the OTP: ")
+                    is_valid = totp.verify(user_input_otp)#verificication errors fixed
+                    
+                    if is_valid:
+                        print("verification successful")#make something where it can access after succeful verification
+                        ask = input("authorize this device without verification next time?(y/n): ").lower()
+                        if ask == 'y':
+                            end_of_user_index = next((i for i, line in enumerate(lines) if line.strip() == f'---*end of {username}*---'), None)
+                            if end_of_user_index is not None:
+                                # Insert the new MAC address before the '---*end of someone*---' line
+                                lines.insert(end_of_user_index, f'{hash_aa}\n')
+
+                                # Write the modified lines back to the file
+                                with open(file_path, 'w') as file:
+                                    file.writelines(lines)
+                        else:
+                            print("okay")
+                            encry_compr(key, file_path)
+                            return
+                            
+                    else:
+                        print("verification unsuccessful")
+                        encry_compr(key, file_path)
+                        return
         
         elif lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
-                print("account found but your signing in from a different location so you need verification")
-                pin = input("Enter the account pin code: ")
-            
-                bytes_pin = pin.encode('utf-8')
-                sha512_hasher.update(bytes_pin)
-                hash_pin = sha512_hasher.hexdigest()
+                print("account found but your signing in from a different location need verification")
                 
-                if hash_pin == lines[4]:
-                    print("pin verification succeded")
-                    encry_compr(key, file_path)
-                    
-                    with open(user_key_path+f'\\{username}_key.key', 'r') as user_key_file:
-                        user_key = user_key_file.read().strip()
+                with open(user_key_path+f'\\{username}_key.key', 'r') as user_key_file:
+                    user_key = user_key_file.read().strip()
 
-                        totp = pyotp.TOTP(user_key)
-                        send_email(sendr_email, sendr_pass, email, sub, totp.now(), attachment_path=None)
-                        user_input_otp = input("Enter the OTP: ")
-                        is_valid = totp.verify(user_input_otp)#verificication errors fixed
-                        
-                        if is_valid:
-                            print("verification successful")#make something where it can access after succeful verification
-                            encry_compr(key, file_path)
-                            return
-                        else:
-                            print("verification unsuccessful")
-                            encry_compr(key, file_path)
-                            return
-                
-                else:
-                    print("pin verification not accepted")
-                    encry_compr(key, file_path)
-                    return
+                    totp = pyotp.TOTP(user_key)
+                    send_email(sendr_email, sendr_pass, email, sub, msg, attachment_path=qr+f'\\{username}_qr.png')
+                    # print(totp.now())
+                    user_input_otp = input("Enter the OTP: ")
+                    is_valid = totp.verify(user_input_otp)#verificication errors fixed
+                    
+                    if is_valid:
+                        print("verification successful")#make something where it can access after succeful verification
+                    else:
+                        print("verification unsuccessful")
+                        encry_compr(key, file_path)
+                        return
         
         else:
             ask = input("Account not found. Would you like to sign up instead using these credentials? (y/n): ").lower()

@@ -10,14 +10,51 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     smtp_username = sender_email
     smtp_password = sender_password
     
+    with open("C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\templates\\temp\\index.html","r") as temp:
+        content = temp.read()
+    
     # Create the email message
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
     msg['Subject'] = subject
+    html_temp = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email-Verification</title>
+        <style>        
+        .email-text {{
+            text-align: center;
+        }}
 
-    # Attach the message body as HTML
-    msg.attach(MIMEText(f'<div style="text-align: center;"><p style="font-size: 16px; font-weight: bold;">{message}</p></div>'))
+        .logo-container {{
+            text-align: center;
+        }}
+
+        .logo {{
+            height: 25px;
+            width: 25px;
+            border-radius: 50%;
+        }}
+        </style>
+    </head>
+    <body>
+        <h1 class='email-text'>{message}</h1>
+        <div class='logo-container'>
+            <a href='https://github.com/galacticoder'>
+                <img src="https://cdn.pixabay.com/photo/2022/01/30/13/33/github-6980894_1280.png" class='logo'/>
+            </a>
+        </div>
+    </body>
+    </html>
+    """
+
+
+    
+    msg.attach(MIMEText(html_temp, 'html'))
 
     # Attach the file if provided
     if attachment_path:
@@ -44,12 +81,3 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     finally:
         # Quit the SMTP server
         server.quit()
-
-# sender_email = "galacticoderr@gmail.com"
-# sender_password = "jlnw esrt tjlu bnfp"
-# recipient_email = "ilovevibingtolofii@gmail.com"
-# subject = "Centered Text in Email"
-# message = "This is an example email with centered <strong>bold text</strong> and <span style='font-size: 18px;'>bigger font</span>."
-# # attachment_path = "path/to/your/file.txt"  # Replace with the actual path or set to None if no attachment
-
-# send_email(sender_email, sender_password, recipient_email, subject, message, attachment_path=None)
