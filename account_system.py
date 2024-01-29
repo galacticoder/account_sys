@@ -76,7 +76,7 @@ def sign_up():
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
         bytes_aa = aa.encode('utf-8')
-        bytes_pin = pin.encode('utf-8')
+        bytes_pin = pin_str.encode('utf-8')
         bytes_email = email.encode("utf-8")
         sha512_hasher_pin = hashlib.sha512()
         
@@ -89,6 +89,7 @@ def sign_up():
                 
         argon2Hasher =  argon2.PasswordHasher(
             time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
+        
         hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
@@ -248,7 +249,6 @@ def sign_in():
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
             pin = int(masked_input(prompt='Enter your pin code: '))
-
             pin_str = str(pin).strip()
             bytes_pin = pin.encode('utf-8')
             sha512_hasher_pin = hashlib.sha512()
@@ -269,9 +269,9 @@ def sign_in():
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location so you need verification")
                 pin = int(masked_input(prompt='Enter your pin code: '))
-
                 pin_str = str(pin).strip()
-                bytes_pin = pin.encode('utf-8')
+                
+                bytes_pin = pin_str.encode('utf-8')
                 sha512_hasher_pin.update(bytes_pin)
                 hash_pin = sha512_hasher_pin.hexdigest()
                 
