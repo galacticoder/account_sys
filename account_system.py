@@ -1,4 +1,4 @@
-import re
+import re  #finds value error for strings in pin input except that error and input a message #set a max pin length
 import msvcrt
 from compress import encry_compr, decry_decom
 import pyotp 
@@ -14,16 +14,19 @@ from argon2 import PasswordHasher
 def masked_input(prompt):
     print(prompt, end='', flush=True)
     password = ''
+
     while True:
         char = msvcrt.getch().decode('utf-8')
         if char == '\r' or char == '\n':
             break
-        elif char == '\b': #for backspace
-            password = password[:-1]
-            print('\b \b', end='', flush=True)
+        elif char == '\b':  # for backspace
+            if len(password) > 0:
+                password = password[:-1]
+                print('\b \b', end='', flush=True)  # erase the character
         else:
             password += char
             print('*', end='', flush=True)
+
     print()
     return password
 
@@ -62,7 +65,7 @@ def sign_up():
         username = input("Username: ").strip()
         password = masked_input(prompt='Password: ').strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
-        pin = masked_input(prompt='Set a pin: ').strip()
+        pin = int(masked_input(prompt='Set a pin: ')).strip()
 
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
@@ -88,31 +91,24 @@ def sign_up():
         hash_password = argon2Hasher.hash(password)
         
         lines = extract_lines(username, file_path)
-        print(lines)
         
-        if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
-                print("account found")
-                pin = masked_input(prompt='Enter pin code: ')
-                
-                if hash_pin == lines[4]:
-                    print("pin verification succeded")
-                    encry_compr(key, file_path)
-                    return
-                
-                else:
-                    print("pin verification not accepted")
-                    encry_compr(key, file_path)
-                    return
+        # if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
+        #     print("account found")
+        #     pin = masked_input(prompt='Enter pin code: ')
+            
+        #     if hash_pin == lines[4]:
+        #         print("pin verification succeded")
+        #         encry_compr(key, file_path)
+        #         return
+            
+        #     else:
+        #         print("pin verification not accepted")
+        #         encry_compr(key, file_path)
+        #         return
         
         with open(file_path, 'a') as sign:
             with open(file_path, 'r') as file:
                 find_e = file.readlines()
-                for line in find_e:
-                    if email in line:
-                        print("Email is already in use.")
-                        os.remove(user_key_path+f'\\{username}_key.key')
-                        encry_compr(key, file_path)
-                        return
                 for line in find_e:
                     if re.search(r'---{}---'.format(re.escape(username)), line) and os.path.exists(user_key_path+f'\\{username}_key.key'):
                         print("Username is already in use\n")
@@ -121,6 +117,14 @@ def sign_up():
                         else:
                             encry_compr(key, file_path)
                             return
+                        
+                for line in find_e:
+                    if email in line:
+                        print("Email is already in use.")
+                        os.remove(user_key_path+f'\\{username}_key.key')
+                        encry_compr(key, file_path)
+                        return
+                    
                         
             if email[-10:] != '@gmail.com':
                 print("invalid email format")
@@ -168,20 +172,18 @@ def sign_up():
                         encry_compr(key, file_path)
                         return
 
-            with open(f"{user_key_path}\\{username}_key.key",'r') as ver_key: #make it write to the variavbler hash_pin
-                contents = ver_key.read()
+            sign.write(f'---{username}---\n')
+            sign.write(f'{username}\n')
+            sign.write(f'{hash_password}\n')
+            sign.write(f'{email}\n')
+            sign.write(f'{hash_aa}\n')
+            sign.write(f'{hash_pin}\n')
+            sign.write(f'---*end of {username}*---\n')
 
-                sign.write(f'---{username}---\n')
-                sign.write(f'{username}\n')
-                sign.write(f'{hash_password}\n')
-                sign.write(f'{email}\n')
-                sign.write(f'{hash_aa}\n')
-                sign.write(f'{hash_pin}\n')
-                sign.write(f'---*end of {username}*---\n')
-
-                print("Sign up successful")
+            print("Sign up successful")
 
         encry_compr(key, file_path)
+        return
 
     except KeyboardInterrupt:
         if os.path.getsize(file_path) == 0:
@@ -191,6 +193,7 @@ def sign_up():
             print("Operation canceled by user")
             encry_compr(key, file_path)
             return
+        
     except Exception as Error:
         os.remove(user_key_path+f"\\{username}_key.key")
         if os.path.getsize(file_path) == 0:
@@ -206,14 +209,11 @@ def sign_in():
         with open('params.txt', 'r') as params:
             lines = params.readlines()
             key = lines[0].strip().replace('key=', '').replace('"', '')
-            unallowed = lines[2].strip().replace('unallowed=', '')
             file_path = lines[3].strip().replace('file_path=', '').replace('"', '')
-            secret_key = lines[4].strip().replace('secret_key=', '').replace('"', '')
             user_key_path = lines[7].strip().replace('tr_key=', '').replace('"', '')
             sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
             sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
             sub = lines[10].strip().replace('sub=', '').replace('"', '')
-            msg = lines[11].strip().replace('msg=', '').replace('"', '')
 
         decry_decom(key, file_path)
 

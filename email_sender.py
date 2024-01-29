@@ -6,11 +6,10 @@ from email.message import EmailMessage
 
 def send_email(sender_email, sender_password, recipient_email, subject, message, attachment_path=None):
     smtp_server = 'smtp.gmail.com'
-    smtp_port = 587  # replace with the port for your SMTP server
+    smtp_port = 587
     smtp_username = sender_email
     smtp_password = sender_password
-    
-    # Create the email message
+
     msg = MIMEMultipart()
     msg['From'] = sender_email
     msg['To'] = recipient_email
@@ -53,7 +52,6 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     
     msg.attach(MIMEText(html_temp, 'html'))
 
-    # Attach the file if provided
     if attachment_path:
         with open(attachment_path, 'rb') as file:
             attachment = MIMEApplication(file.read())
@@ -61,11 +59,9 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
             msg.attach(attachment)
 
     try:
-        # Connect to the SMTP server
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
 
-        # Login to the email account
         server.login(smtp_username, smtp_password)
 
         # Send the email
@@ -76,5 +72,4 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
         print("Error sending email:", str(e))
 
     finally:
-        # Quit the SMTP server
         server.quit()
