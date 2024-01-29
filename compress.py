@@ -2,6 +2,7 @@ import time
 import lzma
 from cryptography.fernet import Fernet
 import os
+import shutil
 
 with open("params.txt",'r') as par:
     lines = par.readlines()
@@ -12,7 +13,7 @@ if os.path.exists('comp_key.key') != True:
 
     with open('key.key', 'wb') as filekey:
         filekey.write(key)
-        os.move(key, key_file)
+        shutil.move(key, key_file)
 
 def format_size(size_in_bytes):
     if size_in_bytes >= 2**30:  # 1 GB = 2^30 bytes
