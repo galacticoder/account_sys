@@ -11,7 +11,7 @@ with open("params.txt",'r') as par:
 if os.path.exists('comp_key.key') != True:
     key = Fernet.generate_key()
 
-    with open('key.key', 'wb') as filekey:
+    with open('comp_key.key', 'wb') as filekey:
         filekey.write(key)
         shutil.move(key, key_file)
 
