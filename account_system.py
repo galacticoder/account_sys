@@ -248,9 +248,11 @@ def sign_in():
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
+            
             pin = int(masked_input(prompt='Enter your pin code: '))
             pin_str = str(pin).strip()
-            bytes_pin = pin.encode('utf-8')
+            
+            bytes_pin = pin_str.encode('utf-8')
             sha512_hasher_pin = hashlib.sha512()
             sha512_hasher_pin.update(bytes_pin)
             hash_pin = sha512_hasher_pin.hexdigest()
