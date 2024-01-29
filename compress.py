@@ -6,14 +6,13 @@ import shutil
 
 with open("params.txt",'r') as par:
     lines = par.readlines()
-    key_file = lines[0].strip().replace('key=', '').replace('"', '')
+    key = lines[0].strip().replace('key=', '').replace('"', '')
 
-if os.path.exists('comp_key.key') != True:
-    key = Fernet.generate_key()
+if os.path.exists(key) != True:
+    key_write = Fernet.generate_key()
 
-    with open('comp_key.key', 'wb') as filekey:
-        filekey.write(key)
-        shutil.move(key, key_file)
+    with open(key, 'wb') as filekey:
+        contents = filekey.write(key_write)
 
 def format_size(size_in_bytes):
     if size_in_bytes >= 2**30:  # 1 GB = 2^30 bytes

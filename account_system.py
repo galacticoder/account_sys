@@ -67,7 +67,27 @@ def sign_up():
         email = input("Email(2fa)(only google emails allowed): ").strip()
         pin = int(masked_input(prompt='Set a pin: '))
         pin_str = str(pin).strip()
-
+        
+        if username == '':
+            print("Username input cannot be empty")
+            encry_compr(key, file_path)
+            return
+        
+        elif password == '':
+            print("Password input cannot be empty")
+            encry_compr(key, file_path)
+            return
+        
+        elif email == '':
+            print("Email input cannot be empty")
+            encry_compr(key, file_path)
+            return
+        
+        if len(pin_str)-1 < 6 or len(pin_str)-1 > 9:
+            print("Pin code must be 6-8 digits")
+            encry_compr(key, file_path)
+            return
+            
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
         
