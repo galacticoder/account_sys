@@ -193,6 +193,11 @@ def sign_up():
             print("Operation canceled by user")
             encry_compr(key, file_path)
             return
+    
+    except ValueError:
+        print("Pin code must only contain numbers")
+        encry_compr(key, file_path)
+        return
         
     except Exception as Error:
         os.remove(user_key_path+f"\\{username}_key.key")
@@ -261,7 +266,7 @@ def sign_in():
         elif lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location so you need verification")
-                pin = masked_input(prompt='Enter your pin code: ').strip()
+                pin = int(masked_input(prompt='Enter your pin code: ')).strip()
 
             
                 bytes_pin = pin.encode('utf-8')
@@ -314,6 +319,12 @@ def sign_in():
             print("Operation canceled by user")
             encry_compr(key, file_path)
             return
+        
+    except ValueError:
+        print("Pin code must only contain numbers")
+        encry_compr(key, file_path)
+        return
+    
     except Exception as Error:
         print("unexpected error occured")
         if os.path.getsize(file_path) == 0:
