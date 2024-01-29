@@ -65,7 +65,7 @@ def sign_up():
         username = input("Username: ").strip()
         password = masked_input(prompt='Password: ').strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
-        pin = int(masked_input(prompt='Set a pin: ')).strip()
+        pin = int(masked_input(prompt='Set a pin: '))
 
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
@@ -75,6 +75,7 @@ def sign_up():
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
         bytes_aa = aa.encode('utf-8')
+        str(pin).strip()
         bytes_pin = pin.encode('utf-8')
         bytes_email = email.encode("utf-8")
         sha512_hasher_pin = hashlib.sha512()
@@ -246,8 +247,9 @@ def sign_in():
         
         if lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa == lines[3]:
             print("account found")
-            pin = masked_input(prompt='Enter your pin code: ').strip()
-            
+            pin = int(masked_input(prompt='Enter your pin code: '))
+
+            str(pin).strip()
             bytes_pin = pin.encode('utf-8')
             sha512_hasher_pin = hashlib.sha512()
             sha512_hasher_pin.update(bytes_pin)
@@ -266,9 +268,9 @@ def sign_in():
         elif lines and argon2Hasher.verify(lines[1], password) and bytes_email == lines[2].encode('utf-8') and hash_aa != lines[3]:                            
             if os.path.exists(user_key_path+f'\\{username}_key.key'):
                 print("account found but your signing in from a different location so you need verification")
-                pin = int(masked_input(prompt='Enter your pin code: ')).strip()
+                pin = int(masked_input(prompt='Enter your pin code: '))
 
-            
+                str(pin).strip()
                 bytes_pin = pin.encode('utf-8')
                 sha512_hasher_pin.update(bytes_pin)
                 hash_pin = sha512_hasher_pin.hexdigest()
