@@ -1,4 +1,4 @@
-key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\key.key"
+key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\server_keys\\comp_key.key"
 c=123456
 unallowed=[",", "}", "{", "\\", "|", ";", ">", "<", "[", "]", "%", ":", "/", "*", "$", "@", "!", "^", "&", ".", "#", "+", "=", "-"," "]
 file_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\sign_in.txt"

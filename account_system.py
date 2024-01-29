@@ -1,4 +1,4 @@
-import re  #finds value error for strings in pin input except that error and input a message #set a max pin length
+import re  #make a compression key and use it to compress the sign in file #set a max pin length
 import msvcrt
 from compress import encry_compr, decry_decom
 import pyotp 

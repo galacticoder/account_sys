@@ -1,14 +1,19 @@
 import time
 import lzma
 from cryptography.fernet import Fernet
+import os
 
-#Uncomment if you need to make a new key file
-#-----------------------------------
-# key = Fernet.generate_key()
+with open("params.txt",'r') as par:
+    lines = par.readlines()
+    key_file = lines[0].strip().replace('key=', '').replace('"', '')
 
-# with open('key.key', 'wb') as filekey:
-#    filekey.write(key)
-#-----------------------------------
+if os.path.exists('comp_key.key') != True:
+    key = Fernet.generate_key()
+
+    with open('key.key', 'wb') as filekey:
+        filekey.write(key)
+        os.move(key, key_file)
+
 def format_size(size_in_bytes):
     if size_in_bytes >= 2**30:  # 1 GB = 2^30 bytes
         size_in_units = size_in_bytes / 2**30
