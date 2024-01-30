@@ -1,4 +1,4 @@
-import re  #make a compression key and use it to compress the sign in file #set a max pin length
+import re
 import msvcrt
 from compress import encry_compr, decry_decom
 import pyotp 
@@ -19,6 +19,7 @@ def masked_input(prompt):
         char = msvcrt.getch().decode('utf-8')
         if char == '\r' or char == '\n':
             break
+        
         elif char == '\b':  # for backspace
             if len(password) > 0:
                 password = password[:-1]
@@ -57,7 +58,7 @@ def sign_up():
             sendr_email = lines[8].strip().replace('sender_email=', '').replace('"', '')
             sendr_pass = lines[9].strip().replace('sender_pass=', '').replace('"', '')
             sub = lines[10].strip().replace('sub=', '').replace('"', '')
-            msg = lines[11].strip().replace('msg=', '').replace('"', '')
+            msg = lines[11].strip().replace('msg=', '').replace("'", '')
         
         decry_decom(key, file_path)
 
@@ -66,7 +67,6 @@ def sign_up():
         password = masked_input(prompt='Password: ').strip()
         email = input("Email(2fa)(only google emails allowed): ").strip()
         pin = int(masked_input(prompt='Set a pin: '))
-        pin_str = str(pin).strip()
         
         if username == '':
             print("Username input cannot be empty")
@@ -83,15 +83,28 @@ def sign_up():
             encry_compr(key, file_path)
             return
         
-        if len(pin_str)-1 < 6 or len(pin_str)-1 > 9:
+        pin_str = str(pin).strip()
+        if len(pin_str) <= 5 or len(pin_str) >= 9:
             print("Pin code must be 6-8 digits")
             encry_compr(key, file_path)
             return
-            
+
         with open(f"{username}_key.key",'w') as user_key:
             user_key.write(pyotp.random_base32())
         
         shutil.move(f"{username}_key.key",user_key_path+f"\\{username}_key.key")
+        
+        totp = pyotp.TOTP(user_key)
+        send_email(sendr_email, sendr_pass, email, sub, totp.now(), attachment_path=None)
+        verify_code_email = int(input('Enter the code sent to your email to verify your email: '))
+        is_valid = totp.verify(verify_code_email)
+        
+        if is_valid:
+            print("Email verified")
+        else:
+            print("Email not verified")
+            encry_compr(key, file_path)
+            return
         
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
@@ -146,7 +159,6 @@ def sign_up():
                         os.remove(user_key_path+f'\\{username}_key.key')
                         encry_compr(key, file_path)
                         return
-                    
                         
             if email[-10:] != '@gmail.com':
                 print("invalid email format")
@@ -252,9 +264,7 @@ def sign_in():
         aa = ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff) for elements in range(5, -1, -1)])
         
         bytes_email = email.encode('utf-8')
-        bytes_password = password.encode('utf-8')
         bytes_aa = aa.encode('utf-8')
-        ph = PasswordHasher()
         sha512_hasher_pin = hashlib.sha512()
         
         sha512_hasher = hashlib.sha512()

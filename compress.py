@@ -2,7 +2,6 @@ import time
 import lzma
 from cryptography.fernet import Fernet
 import os
-import shutil
 
 with open("params.txt",'r') as par:
     lines = par.readlines()

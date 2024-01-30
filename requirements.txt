@@ -1,0 +1,14 @@
+aiodns==3.1.1
+aiosmtpd==1.4.4.post2
+atpublic==4.0
+attrs==23.2.0
+cffi==1.16.0
+getmac==0.9.4
+pycares==4.4.0
+pycparser==2.21
+verify-email==2.4.3
+argon2-cffi==20.1.0
+passlib==1.7.4
+pyotp==2.8.0
+cryptography==3.4.7
+secure-smtplib==0.1.1

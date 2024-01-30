@@ -2,7 +2,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from email.message import EmailMessage
+from validate_email_address import validate_email
 
 def send_email(sender_email, sender_password, recipient_email, subject, message, attachment_path=None):
     smtp_server = 'smtp.gmail.com'
@@ -14,6 +14,7 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     msg['From'] = sender_email
     msg['To'] = recipient_email
     msg['Subject'] = subject
+
     html_temp = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -48,8 +49,6 @@ def send_email(sender_email, sender_password, recipient_email, subject, message,
     </html>
     """
 
-
-    
     msg.attach(MIMEText(html_temp, 'html'))
 
     if attachment_path:

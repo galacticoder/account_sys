@@ -9,6 +9,7 @@ tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\user_keys"
 sender_email="galacticoderr@gmail.com"
 sender_pass="jlnw esrt tjlu bnfp"
 sub="Your OTP verification code"
+msg='Verify your email'
 
 
 
