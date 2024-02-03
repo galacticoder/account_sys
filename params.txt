@@ -1,15 +1,15 @@
-key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\server_keys\\comp_key.key"
+key="C:\\Users\\#path that leads to the key\\system_proj\\users\\server_keys\\comp_key.key" 
 c=123456
 unallowed=[",", "}", "{", "\\", "|", ";", ">", "<", "[", "]", "%", ":", "/", "*", "$", "@", "!", "^", "&", ".", "#", "+", "=", "-"," "]
 file_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\sign_in.txt"
-secret_key="siomeodsiklfjdshjfhjsdil8902893472918"
-ver="C:\Users\zombi\OneDrive\Desktop\system_proj\ver.key"
-qr_code_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\qr_codes"
-tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\user_keys"
-sender_email="galacticoderr@gmail.com"
-sender_pass="jlnw esrt tjlu bnfp"
-sub="Your OTP verification code"
-msg='Verify your email'
+secret_key="" #<--dont even matter idk why its here it was testing for the pre release | leave blank
+ver="" #<-- again leave blank
+qr_code_path="" #<-- leave blank prerelease testing
+tr_key="C:\\Users\\#path that leads to the key folder\\system_proj\\users\\user_keys"
+sender_email="" #<-- use sender email
+sender_pass="" #<-- use sender email app password
+sub="" #<-- email subject. ex(Your OTP verification code)
+msg='' #<-- message with email. ex(Verify your email)
 
 
 
