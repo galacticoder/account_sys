@@ -1,13 +1,13 @@
-key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\key.key"
+key=""
 c=123456
 unallowed=[",", "}", "{", "\\", "|", ";", ">", "<", "[", "]", "%", ":", "/", "*", "$", "@", "!", "^", "&", ".", "#", "+", "=", "-"," "]
-file_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\sign_in.txt"
-secret_key="siomeodsiklfjdshjfhjsdil8902893472918"
-ver="C:\Users\zombi\OneDrive\Desktop\system_proj\ver.key"
-qr_code_path="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\qr_codes"
-tr_key="C:\\Users\\zombi\\OneDrive\\Desktop\\system_proj\\users\\keys"
-sender_email="galacticoderr@gmail.com"
-sender_pass="jlnw esrt tjlu bnfp"
+file_path=""
+secret_key=""
+ver=""
+qr_code_path=""
+tr_key=""
+sender_email=""
+sender_pass=""
 sub="Your verification qr code"
 
 
